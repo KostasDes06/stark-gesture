@@ -132,6 +132,9 @@ This project was created as a personal portfolio project to explore:
 * Animation systems
 * Human-computer interaction
 
+## AI Assistance
+AI tools were used as development assistance during the implementation of this project.
+
 ## Status
 
 **Completed portfolio project**
