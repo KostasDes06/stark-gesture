@@ -1,0 +1,2653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <meta name="theme-color" content="#02070b" />
+  <title>StarkGesture — Gesture Interface</title>
+
+  <style>
+    :root {
+      --bg: #02070b;
+      --panel: rgba(4, 18, 26, 0.72);
+      --panel-strong: rgba(5, 27, 38, 0.9);
+      --line: rgba(94, 227, 255, 0.36);
+      --line-strong: rgba(94, 227, 255, 0.82);
+      --cyan: #5ee3ff;
+      --cyan-soft: rgba(94, 227, 255, 0.18);
+      --white: #ecfbff;
+      --muted: #6f9aa6;
+      --danger: #ff6d8d;
+      --success: #80ffcf;
+      --warning: #ffd37a;
+      --shadow: 0 0 40px rgba(94, 227, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(0, 173, 255, 0.06), transparent 35%),
+        #02070b;
+      color: var(--white);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "Segoe UI",
+        sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(0, 212, 255, 0.04), transparent 55%);
+      background-size: 42px 42px;
+    }
+
+    #app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          transparent 0px,
+          transparent 5px,
+          rgba(255,255,255,0.008) 6px
+        );
+      mix-blend-mode: screen;
+    }
+
+    /* =========================================================
+       TOP BAR
+    ========================================================= */
+
+    .topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 20;
+      border-bottom: 1px solid rgba(94,227,255,.1);
+      background: linear-gradient(
+        180deg,
+        rgba(2, 7, 11, 0.92),
+        rgba(2, 7, 11, 0.3)
+      );
+      backdrop-filter: blur(14px);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-core {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--cyan);
+      position: relative;
+      box-shadow:
+        0 0 15px rgba(94,227,255,.4),
+        inset 0 0 14px rgba(94,227,255,.15);
+    }
+
+    .brand-core::before,
+    .brand-core::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: inherit;
+      border: 1px solid var(--cyan);
+    }
+
+    .brand-core::after {
+      inset: 13px;
+      background: var(--cyan);
+      box-shadow: 0 0 14px rgba(94,227,255,.8);
+    }
+
+    .brand-title {
+      font-size: 12px;
+      letter-spacing: .32em;
+      font-weight: 600;
+    }
+
+    .brand-subtitle {
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: .22em;
+      margin-top: 3px;
+    }
+
+    .top-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      letter-spacing: .16em;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .status-dot.online {
+      background: var(--success);
+    }
+
+    /* =========================================================
+       LAYOUT
+    ========================================================= */
+
+    .workspace {
+      position: absolute;
+      inset: 76px 0 0;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 300px;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .column {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .glass-panel {
+      position: relative;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(
+          145deg,
+          rgba(11, 42, 53, .62),
+          rgba(2, 12, 18, .7)
+        );
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      clip-path: polygon(
+        10px 0,
+        calc(100% - 10px) 0,
+        100% 10px,
+        100% calc(100% - 10px),
+        calc(100% - 10px) 100%,
+        10px 100%,
+        0 calc(100% - 10px),
+        0 10px
+      );
+    }
+
+    .glass-panel::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(94,227,255,.9),
+        transparent
+      );
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 16px 10px;
+      border-bottom: 1px solid rgba(94,227,255,.08);
+    }
+
+    .panel-title {
+      font-size: 9px;
+      letter-spacing: .18em;
+      color: var(--cyan);
+    }
+
+    .panel-code {
+      color: #4b7280;
+      font-size: 8px;
+      letter-spacing: .12em;
+    }
+
+    .panel-body {
+      padding: 15px;
+    }
+
+    /* =========================================================
+       CAMERA
+    ========================================================= */
+
+    .camera-panel {
+      height: 300px;
+    }
+
+    .camera-stage {
+      position: relative;
+      height: 215px;
+      overflow: hidden;
+      border: 1px solid rgba(94,227,255,.18);
+      background: #010507;
+    }
+
+    #video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transform: scaleX(-1);
+      filter:
+        saturate(.75)
+        contrast(1.04)
+        brightness(.82);
+    }
+
+    #visionCanvas,
+    #fxCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #visionCanvas {
+      transform: scaleX(-1);
+    }
+
+    .camera-scanline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      top: -5px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(94,227,255,.0),
+        rgba(94,227,255,.85),
+        rgba(94,227,255,.0),
+        transparent
+      );
+      box-shadow: 0 0 15px rgba(94,227,255,.45);
+      animation: scan 4.5s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes scan {
+      0%   { top: -4px; }
+      100% { top: 100%; }
+    }
+
+    .camera-overlay {
+      position: absolute;
+      inset: 10px;
+      pointer-events: none;
+    }
+
+    .corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: rgba(94,227,255,.9);
+      border-style: solid;
+    }
+
+    .corner.tl {
+      top: 0;
+      left: 0;
+      border-width: 1px 0 0 1px;
+    }
+
+    .corner.tr {
+      top: 0;
+      right: 0;
+      border-width: 1px 1px 0 0;
+    }
+
+    .corner.bl {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 1px 1px;
+    }
+
+    .corner.br {
+      bottom: 0;
+      right: 0;
+      border-width: 0 1px 1px 0;
+    }
+
+    .camera-label {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      font-size: 7px;
+      color: rgba(193,242,255,.72);
+      letter-spacing: .18em;
+    }
+
+    .camera-state {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      font-size: 7px;
+      color: var(--success);
+      letter-spacing: .15em;
+    }
+
+    .camera-button-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+    }
+
+    .primary-button {
+      border: 1px solid var(--line-strong);
+      background: rgba(5, 22, 29, .88);
+      color: var(--white);
+      padding: 11px 15px;
+      font-size: 9px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      box-shadow: 0 0 24px rgba(94,227,255,.1);
+      transition: .2s ease;
+    }
+
+    .primary-button:hover {
+      background: rgba(14, 51, 64, .95);
+      box-shadow: 0 0 30px rgba(94,227,255,.2);
+      transform: translateY(-1px);
+    }
+
+    /* =========================================================
+       CORE
+    ========================================================= */
+
+    .center-stage {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      perspective: 900px;
+      border: 1px solid rgba(94,227,255,.1);
+      background:
+        radial-gradient(
+          circle at center,
+          rgba(0, 187, 255, .08),
+          transparent 38%
+        );
+    }
+
+    .center-stage::before {
+      content: "";
+      position: absolute;
+      inset: 8%;
+      border: 1px solid rgba(94,227,255,.06);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .center-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          90deg,
+          transparent 49.95%,
+          rgba(94,227,255,.05) 50%,
+          transparent 50.05%
+        ),
+        linear-gradient(
+          0deg,
+          transparent 49.95%,
+          rgba(94,227,255,.05) 50%,
+          transparent 50.05%
+        );
+    }
+
+    .system-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(320px, 38vw);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      transform-style: preserve-3d;
+      will-change: left, top, transform, opacity;
+      z-index: 4;
+      transition: filter .25s ease;
+    }
+
+    .sphere-shell {
+      position: absolute;
+      inset: 12%;
+      overflow: hidden;
+      border: 1px solid rgba(157, 246, 255, .88);
+      border-radius: 50%;
+      background:
+        radial-gradient(ellipse at 33% 24%, rgba(236, 255, 255, .94) 0, rgba(115, 236, 255, .52) 3%, transparent 17%),
+        radial-gradient(ellipse at 50% 53%, rgba(25, 173, 220, .22), rgba(1, 18, 32, .8) 57%, rgba(0, 4, 12, .98) 76%),
+        repeating-linear-gradient(0deg, transparent 0 13px, rgba(94, 227, 255, .22) 14px, transparent 15px),
+        repeating-linear-gradient(90deg, transparent 0 13px, rgba(94, 227, 255, .17) 14px, transparent 15px);
+      box-shadow:
+        inset -24px -18px 38px rgba(0, 0, 0, .9),
+        inset 12px 10px 24px rgba(111, 240, 255, .25),
+        0 0 22px rgba(94, 227, 255, .55),
+        0 0 75px rgba(31, 190, 255, .32);
+      animation: sphereBreath 3.5s ease-in-out infinite;
+    }
+
+    .sphere-shell::before,
+    .sphere-shell::after {
+      content: "";
+      position: absolute;
+      inset: 7%;
+      border: 1px solid rgba(122, 242, 255, .36);
+      border-radius: 50%;
+      transform: rotate(-28deg) scaleX(.46);
+      box-shadow: 0 0 13px rgba(94, 227, 255, .2);
+    }
+
+    .sphere-shell::after {
+      transform: rotate(28deg) scaleX(.46);
+      border-color: rgba(183, 251, 255, .3);
+    }
+
+    .sphere-aura {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(94, 227, 255, .34);
+      border-radius: 50%;
+      background: radial-gradient(circle, transparent 54%, rgba(34, 192, 255, .06) 65%, transparent 72%);
+      box-shadow: 0 0 42px rgba(40, 193, 255, .24), inset 0 0 36px rgba(94, 227, 255, .1);
+      animation: rotateSlow 22s linear infinite;
+    }
+
+    .sphere-aura::before,
+    .sphere-aura::after {
+      content: "";
+      position: absolute;
+      inset: 9%;
+      border: 1px dashed rgba(128, 255, 237, .4);
+      border-radius: 50%;
+      transform: rotateX(68deg);
+    }
+
+    .sphere-aura::after {
+      transform: rotateY(68deg);
+      border-style: dotted;
+      border-color: rgba(94, 227, 255, .5);
+    }
+
+    .sphere-core-light {
+      position: absolute;
+      inset: 41%;
+      border-radius: 50%;
+      background: #e9ffff;
+      box-shadow: 0 0 14px 5px rgba(161, 250, 255, .9), 0 0 54px 22px rgba(45, 204, 255, .58);
+      animation: pulseCore 1.8s ease-in-out infinite;
+    }
+
+    @keyframes sphereBreath {
+      0%, 100% { filter: brightness(.88); }
+      50% { filter: brightness(1.18); }
+    }
+
+    #sphereFxCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .system-core.exploding {
+      animation: sphereBurst .48s ease-in forwards;
+    }
+
+    @keyframes sphereBurst {
+      0% { opacity: 1; filter: brightness(1.8); }
+      30% { opacity: .9; filter: brightness(3) blur(2px); transform: translate(-50%, -50%) scale(1.18); }
+      100% { opacity: 0; filter: brightness(4) blur(12px); transform: translate(-50%, -50%) scale(.12); }
+    }
+
+    .system-core.reappearing {
+      animation: sphereReform .72s cubic-bezier(.16,.84,.35,1.15) both;
+    }
+
+    @keyframes sphereReform {
+      0% { opacity: 0; filter: brightness(3) blur(12px); transform: translate(-50%, -50%) scale(.12); }
+      72% { opacity: 1; filter: brightness(1.7) blur(0); transform: translate(-50%, -50%) scale(1.08); }
+      100% { opacity: 1; filter: brightness(1); transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes rotateSlow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    @keyframes pulseCore {
+      0%,100% { transform: scale(.92); opacity: .85; }
+      50%     { transform: scale(1.08); opacity: 1; }
+    }
+
+    .core-label {
+      position: absolute;
+      left: 50%;
+      bottom: -32px;
+      transform: translateX(-50%);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .core-label-main {
+      font-size: 10px;
+      letter-spacing: .25em;
+      color: var(--white);
+    }
+
+    .core-label-sub {
+      margin-top: 6px;
+      font-size: 7px;
+      color: var(--muted);
+      letter-spacing: .18em;
+    }
+
+    /* =========================================================
+       VIRTUAL CURSOR
+    ========================================================= */
+
+    .cursor {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      margin: -17px 0 0 -17px;
+      border: 1px solid rgba(94,227,255,.75);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 30;
+      display: none;
+      box-shadow:
+        0 0 13px rgba(94,227,255,.55),
+        inset 0 0 12px rgba(94,227,255,.1);
+    }
+
+    .cursor::before,
+    .cursor::after {
+      content: "";
+      position: absolute;
+      background: var(--cyan);
+      box-shadow: 0 0 7px rgba(94,227,255,.8);
+    }
+
+    .cursor::before {
+      width: 52px;
+      height: 1px;
+      left: -10px;
+      top: 16px;
+    }
+
+    .cursor::after {
+      width: 1px;
+      height: 52px;
+      left: 16px;
+      top: -10px;
+    }
+
+    .cursor.active {
+      display: block;
+      animation: cursorPulse 1.2s ease-in-out infinite;
+    }
+
+    .cursor.pinch {
+      border-color: var(--success);
+      box-shadow:
+        0 0 18px rgba(128,255,207,.65),
+        inset 0 0 12px rgba(128,255,207,.18);
+      transform: scale(1.15);
+    }
+
+    @keyframes cursorPulse {
+      0%,100% { opacity: .8; }
+      50% { opacity: 1; }
+    }
+
+    /* =========================================================
+       RIGHT PANELS
+    ========================================================= */
+
+    .status-list {
+      display: grid;
+      gap: 11px;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status-name {
+      font-size: 8px;
+      color: #8bb0bb;
+      letter-spacing: .1em;
+    }
+
+    .status-value {
+      font-size: 8px;
+      color: var(--success);
+      letter-spacing: .12em;
+    }
+
+    .metric {
+      margin-top: 7px;
+    }
+
+    .metric-bar {
+      height: 3px;
+      background: rgba(94,227,255,.08);
+      overflow: hidden;
+      border: 1px solid rgba(94,227,255,.07);
+    }
+
+    .metric-fill {
+      height: 100%;
+      width: 65%;
+      background: linear-gradient(90deg, rgba(94,227,255,.25), var(--cyan));
+      box-shadow: 0 0 10px rgba(94,227,255,.35);
+      transition: width .25s ease;
+    }
+
+    .gesture-display {
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .gesture-name {
+      font-size: 15px;
+      letter-spacing: .16em;
+      margin-bottom: 10px;
+      color: var(--white);
+    }
+
+    .gesture-description {
+      color: var(--muted);
+      font-size: 8px;
+      letter-spacing: .08em;
+      line-height: 1.7;
+      max-width: 210px;
+      margin: auto;
+    }
+
+    .control-panel {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .control-guide {
+      display: grid;
+      gap: 14px;
+    }
+
+    .control-guide > div {
+      display: grid;
+      gap: 5px;
+    }
+
+    .control-guide b {
+      color: var(--cyan);
+      font-size: 8px;
+      letter-spacing: .1em;
+      font-weight: 600;
+    }
+
+    .control-guide span {
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    /* =========================================================
+       CENTRAL MICRO HUD
+    ========================================================= */
+
+    .micro-hud {
+      position: absolute;
+      left: 50%;
+      top: 15%;
+      transform: translateX(-50%);
+      z-index: 5;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .micro-hud .small {
+      color: #4c7987;
+      font-size: 7px;
+      letter-spacing: .18em;
+    }
+
+    .micro-hud .big {
+      margin-top: 5px;
+      font-size: 16px;
+      letter-spacing: .22em;
+      color: rgba(236,251,255,.9);
+    }
+
+    .instruction {
+      position: absolute;
+      left: 50%;
+      top: 7%;
+      transform: translateX(-50%);
+      color: #4f7e8c;
+      font-size: 7px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      text-align: center;
+      white-space: nowrap;
+      z-index: 4;
+    }
+
+    /* =========================================================
+       BOTTOM BAR
+    ========================================================= */
+
+    .bottombar {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .bottom-note {
+      font-size: 7px;
+      color: #486c77;
+      letter-spacing: .15em;
+    }
+
+    .bottom-note span {
+      color: #76a9b7;
+    }
+
+    /* =========================================================
+       TOAST
+    ========================================================= */
+
+    .toast {
+      position: absolute;
+      top: 92px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      padding: 9px 15px;
+      border: 1px solid rgba(94,227,255,.35);
+      background: rgba(3, 15, 21, .94);
+      color: var(--white);
+      font-size: 8px;
+      letter-spacing: .15em;
+      transition: .25s ease;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 1100px) {
+      .workspace {
+        grid-template-columns: 240px minmax(0, 1fr) 240px;
+      }
+
+    }
+
+    @media (max-width: 850px) {
+      body {
+        overflow: auto;
+      }
+
+      #app {
+        min-height: 100vh;
+        height: auto;
+      }
+
+      .workspace {
+        position: relative;
+        inset: auto;
+        grid-template-columns: 1fr;
+        padding-top: 90px;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+
+      .center-stage {
+        min-height: 700px;
+      }
+
+      .column {
+        min-height: auto;
+      }
+
+      .system-core {
+        width: min(320px, 76vw);
+      }
+
+      .bottombar {
+        position: fixed;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- =======================================================
+       TOP BAR
+  ======================================================== -->
+  <header class="topbar">
+    <div class="brand-wrap">
+      <div class="brand-core"></div>
+
+      <div>
+        <div class="brand-title">STARKGESTURE</div>
+        <div class="brand-subtitle">HOLOGRAPHIC SPHERE CONTROL</div>
+      </div>
+    </div>
+
+    <div class="top-status">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="topStatus">SYSTEM STANDBY</span>
+    </div>
+  </header>
+
+  <!-- =======================================================
+       WORKSPACE
+  ======================================================== -->
+  <main class="workspace">
+
+    <!-- LEFT -->
+    <section class="column">
+
+      <div class="glass-panel camera-panel">
+        <div class="panel-header">
+          <span class="panel-title">VISION INPUT</span>
+          <span class="panel-code">CAM-01</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="camera-stage">
+
+            <video
+              id="video"
+              playsinline
+              muted
+              autoplay
+            ></video>
+
+            <canvas id="visionCanvas"></canvas>
+            <canvas id="fxCanvas"></canvas>
+
+            <div class="camera-scanline"></div>
+
+            <div class="camera-overlay">
+              <div class="corner tl"></div>
+              <div class="corner tr"></div>
+              <div class="corner bl"></div>
+              <div class="corner br"></div>
+
+              <div class="camera-label">
+                LOCAL VISION PIPELINE
+              </div>
+
+              <div id="cameraState" class="camera-state">
+                STANDBY
+              </div>
+            </div>
+
+            <div id="cameraButtonWrap" class="camera-button-wrap">
+              <button id="startCamera" class="primary-button">
+                INITIALIZE CAMERA
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel">
+        <div class="panel-header">
+          <span class="panel-title">TRACKING DATA</span>
+          <span class="panel-code">LIVE</span>
+        </div>
+
+        <div class="panel-body">
+
+          <div class="status-list">
+
+            <div class="status-row">
+              <div class="status-name">HAND COUNT</div>
+              <div id="handCount" class="status-value">0</div>
+            </div>
+
+            <div class="status-row">
+              <div class="status-name">GESTURE</div>
+              <div id="gestureMini" class="status-value">NONE</div>
+            </div>
+
+            <div class="status-row">
+              <div class="status-name">CONFIDENCE</div>
+              <div id="confidenceMini" class="status-value">0%</div>
+            </div>
+
+            <div class="status-row">
+              <div class="status-name">FPS</div>
+              <div id="fpsMini" class="status-value">0</div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- CENTER -->
+    <section id="centerStage" class="center-stage">
+
+      <canvas id="sphereFxCanvas"></canvas>
+
+      <div class="instruction">
+        ONE-HAND HOLOGRAPHIC OBJECT CONTROL
+      </div>
+
+      <div class="micro-hud">
+        <div class="small">HOLOGRAPHIC OBJECT</div>
+        <div id="sphereStatus" class="big">SPHERE STABLE</div>
+      </div>
+
+      <div class="system-core" id="systemCore">
+        <div class="sphere-aura">
+          <div class="sphere-shell">
+            <div class="sphere-core-light"></div>
+          </div>
+        </div>
+
+        <div class="core-label">
+          <div class="core-label-main">HOLOGRAPHIC SPHERE</div>
+          <div class="core-label-sub" id="coreState">
+            AWAITING GESTURE
+          </div>
+        </div>
+      </div>
+
+      <div id="cursor" class="cursor"></div>
+
+    </section>
+
+    <!-- RIGHT -->
+    <section class="column right-column">
+
+      <div class="glass-panel">
+        <div class="panel-header">
+          <span class="panel-title">SYSTEM STATUS</span>
+          <span class="panel-code">CORE</span>
+        </div>
+
+        <div class="panel-body">
+
+          <div class="status-list">
+
+            <div class="status-row">
+              <div class="status-name">VISION ENGINE</div>
+              <div id="visionStatus" class="status-value">
+                OFFLINE
+              </div>
+            </div>
+
+            <div class="status-row">
+              <div class="status-name">CAMERA</div>
+              <div id="cameraStatus" class="status-value">
+                STANDBY
+              </div>
+            </div>
+
+            <div class="status-row">
+              <div class="status-name">HAND TRACKING</div>
+              <div id="trackingStatus" class="status-value">
+                IDLE
+              </div>
+            </div>
+
+            <div class="status-row">
+              <div class="status-name">GESTURE ENGINE</div>
+              <div id="gestureStatus" class="status-value">
+                READY
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <div class="glass-panel">
+
+        <div class="panel-header">
+          <span class="panel-title">CURRENT GESTURE</span>
+          <span class="panel-code">G-01</span>
+        </div>
+
+        <div class="panel-body gesture-display">
+
+          <div>
+            <div id="gestureName" class="gesture-name">
+              NONE
+            </div>
+
+            <div id="gestureDescription" class="gesture-description">
+              Pinch thumb and index to move. Point up and twist to guide the sphere. Thumb-middle pinch zooms; a fist bursts it.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="glass-panel control-panel">
+
+        <div class="panel-header">
+          <span class="panel-title">GESTURE CONTROLS</span>
+          <span class="panel-code">3D</span>
+        </div>
+
+        <div class="panel-body control-guide">
+          <div><b>THUMB + INDEX PINCH</b><span>Move the sphere around.</span></div>
+          <div><b>POINT UP + TWIST</b><span>Guide and rotate the sphere.</span></div>
+          <div><b>THUMB + MIDDLE PINCH</b><span>Keep index raised; move up to zoom in and down to zoom out.</span></div>
+          <div><b>MAKE A FIST</b><span>Trigger a particle burst; reforms in 2 seconds.</span></div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast">
+    SYSTEM INITIALIZING
+  </div>
+
+  <div class="bottombar">
+    <div class="bottom-note">
+      CAMERA DATA <span>PROCESSED LOCALLY</span>
+    </div>
+
+    <div class="bottom-note">
+      GESTURE CONTROLS <span>MOVE / TWIST / ZOOM / BURST</span>
+    </div>
+
+    <div class="bottom-note">LOCAL VISION <span>NO UPLOAD</span></div>
+  </div>
+
+</div>
+
+<script type="module">
+
+/*
+  ==========================================================
+  STARKGESTURE
+  Single-file hand-gesture futuristic interface
+
+  Stack:
+  - Web APIs
+  - MediaPipe Tasks Vision
+  - HTML Canvas
+  - Vanilla JavaScript
+  - CSS
+  ==========================================================
+*/
+
+import {
+  FilesetResolver,
+  HandLandmarker
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/+esm";
+
+/* ============================================================
+   CONFIG
+============================================================ */
+
+const CONFIG = {
+  WASM_URL:
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm",
+
+  MODEL_URL:
+    "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+
+  maxHands: 1,
+
+  minDetectionConfidence: 0.55,
+  minPresenceConfidence: 0.55,
+  minTrackingConfidence: 0.55,
+
+  pinchThreshold: 0.075,
+
+  gestureHoldFrames: 3,
+  gestureCooldownMs: 160,
+
+  smoothing: 0.35,
+
+  simulatedDemo: true
+};
+
+/* ============================================================
+   DOM
+============================================================ */
+
+const video = document.getElementById("video");
+const visionCanvas = document.getElementById("visionCanvas");
+const visionCtx = visionCanvas.getContext("2d");
+
+const fxCanvas = document.getElementById("fxCanvas");
+const fxCtx = fxCanvas.getContext("2d");
+const sphereFxCanvas = document.getElementById("sphereFxCanvas");
+const sphereFxCtx = sphereFxCanvas.getContext("2d");
+
+const startCameraButton = document.getElementById("startCamera");
+const cameraButtonWrap = document.getElementById("cameraButtonWrap");
+
+const cameraState = document.getElementById("cameraState");
+const cameraStatus = document.getElementById("cameraStatus");
+
+const visionStatus = document.getElementById("visionStatus");
+const trackingStatus = document.getElementById("trackingStatus");
+const gestureStatus = document.getElementById("gestureStatus");
+
+const handCountEl = document.getElementById("handCount");
+const gestureMini = document.getElementById("gestureMini");
+const confidenceMini = document.getElementById("confidenceMini");
+const fpsMini = document.getElementById("fpsMini");
+
+const gestureName = document.getElementById("gestureName");
+const gestureDescription = document.getElementById("gestureDescription");
+
+const statusDot = document.getElementById("statusDot");
+const topStatus = document.getElementById("topStatus");
+
+const coreState = document.getElementById("coreState");
+const systemCore = document.getElementById("systemCore");
+const sphereStatus = document.getElementById("sphereStatus");
+
+const cursor = document.getElementById("cursor");
+const centerStage = document.getElementById("centerStage");
+
+const toast = document.getElementById("toast");
+
+/* ============================================================
+   APPLICATION STATE
+============================================================ */
+
+const state = {
+  initialized: false,
+  cameraActive: false,
+  handLandmarker: null,
+  stream: null,
+
+  running: false,
+  demoMode: CONFIG.simulatedDemo,
+
+  gesture: "NONE",
+  confidence: 0,
+
+  cursorX: 0,
+  cursorY: 0,
+
+  targetCursorX: 0,
+  targetCursorY: 0,
+
+  coreX: 50,
+  coreY: 50,
+  coreScale: 1,
+  coreRotationX: 0,
+  coreRotationY: 0,
+  coreRotationZ: 0,
+  previousTwistAngle: null,
+  zoomHandY: null,
+  sphereExploding: false,
+  explosionParticles: [],
+
+  lastGestureChange: 0,
+
+  previousGesture: "NONE",
+  stableGesture: "NONE",
+  candidateGesture: "NONE",
+  candidateFrames: 0,
+
+  fps: 0,
+  fpsFrames: 0,
+  fpsStartTime: performance.now(),
+
+  lastVideoTime: -1,
+
+  particles: []
+};
+
+/* ============================================================
+   PARTICLES
+============================================================ */
+
+function createParticles() {
+  state.particles = [];
+
+  for (let i = 0; i < 70; i++) {
+    state.particles.push({
+      x: Math.random(),
+      y: Math.random(),
+      size: 0.5 + Math.random() * 1.7,
+      alpha: 0.1 + Math.random() * 0.35,
+      speed: 0.00015 + Math.random() * 0.00045,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+createParticles();
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function midpoint(a, b) {
+  return {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2
+  };
+}
+
+function lerp(a, b, amount) {
+  return a + (b - a) * amount;
+}
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add("visible");
+
+  clearTimeout(showToast.timer);
+
+  showToast.timer = setTimeout(() => {
+    toast.classList.remove("visible");
+  }, 1100);
+}
+
+/* ============================================================
+   GESTURE METRICS
+============================================================ */
+
+function isFingerExtended(
+  landmarks,
+  tip,
+  pip,
+  wrist = 0
+) {
+  const tipDistance = distance(
+    landmarks[tip],
+    landmarks[wrist]
+  );
+
+  const pipDistance = distance(
+    landmarks[pip],
+    landmarks[wrist]
+  );
+
+  return tipDistance > pipDistance * 1.09;
+}
+
+function fingerStates(landmarks) {
+  return {
+    index: isFingerExtended(landmarks, 8, 6),
+    middle: isFingerExtended(landmarks, 12, 10),
+    ring: isFingerExtended(landmarks, 16, 14),
+    pinky: isFingerExtended(landmarks, 20, 18)
+  };
+}
+
+function isPinching(landmarks) {
+  return (
+    distance(landmarks[4], landmarks[8])
+    < CONFIG.pinchThreshold
+  );
+}
+
+function isZoomPinching(landmarks) {
+  return (
+    distance(landmarks[4], landmarks[12])
+    < CONFIG.pinchThreshold
+  );
+}
+
+function isFist(landmarks) {
+  const f = fingerStates(landmarks);
+  const palmCenter = midpoint(landmarks[0], landmarks[9]);
+  const palmLength = distance(landmarks[0], landmarks[9]);
+
+  return (
+    !f.index &&
+    !f.middle &&
+    !f.ring &&
+    !f.pinky &&
+    distance(landmarks[4], palmCenter) < palmLength * 0.78
+  );
+}
+
+function isPointingUp(landmarks) {
+  const f = fingerStates(landmarks);
+  const indexTip = landmarks[8];
+  const indexPip = landmarks[6];
+  const dy = indexPip.y - indexTip.y;
+  const dx = Math.abs(indexTip.x - indexPip.x);
+
+  return (
+    f.index &&
+    !f.middle &&
+    !f.ring &&
+    !f.pinky &&
+    dy > 0.045 &&
+    dx < dy * 0.85
+  );
+}
+
+/* ============================================================
+   GESTURE CLASSIFICATION
+============================================================ */
+
+function classifyStaticGesture(landmarks) {
+
+  if (!landmarks) {
+    return {
+      gesture: "NONE",
+      confidence: 0
+    };
+  }
+
+  const fingers = fingerStates(landmarks);
+  const fistPose = isFist(landmarks);
+
+  if (isZoomPinching(landmarks) && !fistPose) {
+    return { gesture: "ZOOM PINCH", confidence: 0.92 };
+  }
+
+  if (isPinching(landmarks) && !fistPose) {
+    return {
+      gesture: "MOVE PINCH",
+      confidence: 0.94
+    };
+  }
+
+  if (fistPose) {
+    return { gesture: "FIST", confidence: 0.88 };
+  }
+
+  if (isPointingUp(landmarks)) {
+    return { gesture: "POINT UP", confidence: 0.9 };
+  }
+
+  return {
+    gesture: "NONE",
+    confidence: 0.35
+  };
+}
+
+/* ============================================================
+   STABLE GESTURE STATE MACHINE
+============================================================ */
+
+function updateStableGesture(candidate, confidence) {
+
+  if (
+    performance.now() - state.lastGestureChange <
+    CONFIG.gestureCooldownMs
+  ) {
+    return;
+  }
+
+  if (candidate === state.candidateGesture) {
+    state.candidateFrames++;
+  } else {
+    state.candidateGesture = candidate;
+    state.candidateFrames = 1;
+  }
+
+  if (
+    state.candidateFrames >=
+    CONFIG.gestureHoldFrames
+  ) {
+
+    if (
+      candidate !== state.stableGesture
+    ) {
+      state.previousGesture =
+        state.stableGesture;
+
+      state.stableGesture = candidate;
+      state.gesture = candidate;
+      state.confidence = confidence;
+
+      state.lastGestureChange =
+        performance.now();
+
+      handleGestureTransition(
+        candidate,
+        confidence
+      );
+    } else {
+      state.confidence =
+        lerp(
+          state.confidence,
+          confidence,
+          .25
+        );
+    }
+  }
+}
+
+/* ============================================================
+   GESTURE ACTIONS
+============================================================ */
+
+function handleGestureTransition(
+  gesture,
+  confidence
+) {
+
+  gestureName.textContent = gesture;
+  gestureMini.textContent = gesture;
+  confidenceMini.textContent =
+    `${Math.round(confidence * 100)}%`;
+
+  if (gesture === "MOVE PINCH") {
+    cursor.classList.add("active", "pinch");
+    coreState.textContent = "POSITION LINKED";
+    gestureDescription.textContent =
+      "Thumb and index pinched — move your hand to carry the sphere.";
+  } else if (gesture === "ZOOM PINCH") {
+    cursor.classList.add("active", "pinch");
+    coreState.textContent = "SCALE LINKED";
+    gestureDescription.textContent =
+      "Thumb and middle finger pinched — move your hand up or down to zoom.";
+  } else if (gesture === "POINT UP") {
+    cursor.classList.add("active");
+    coreState.textContent = "ROTATION LINKED";
+    gestureDescription.textContent =
+      "Point your index upward and twist your wrist; the sphere follows and rotates.";
+  } else if (gesture === "FIST") {
+    cursor.classList.remove("active", "pinch");
+    coreState.textContent = "ENERGY DISCHARGE";
+    gestureDescription.textContent =
+      "Fist detected — sphere disintegration sequence initiated.";
+    triggerSphereExplosion();
+  } else {
+    cursor.classList.remove("active", "pinch");
+    if (!state.sphereExploding) coreState.textContent = "SPHERE READY";
+    gestureDescription.textContent =
+      "Use the gesture guide to move, rotate, zoom, or burst the sphere.";
+  }
+}
+
+/* ============================================================
+   GESTURE RELEASE
+============================================================ */
+
+function checkGestureRelease(currentGesture) {
+  if (!["MOVE PINCH", "ZOOM PINCH", "POINT UP"].includes(currentGesture)) {
+    cursor.classList.remove("active", "pinch");
+  }
+}
+
+function wrapAngleDelta(delta) {
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  return delta;
+}
+
+/* ============================================================
+   CAMERA INITIALIZATION
+============================================================ */
+
+async function initializeCamera() {
+
+  unlockAudio();
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showToast("CAMERA API NOT AVAILABLE");
+    return;
+  }
+
+  try {
+
+    startCameraButton.disabled = true;
+    startCameraButton.textContent =
+      "REQUESTING ACCESS...";
+
+    state.stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: {
+            ideal: 1280
+          },
+          height: {
+            ideal: 720
+          },
+          facingMode: "user"
+        },
+        audio: false
+      });
+
+    video.srcObject = state.stream;
+
+    await video.play();
+
+    state.cameraActive = true;
+
+    cameraButtonWrap.style.display =
+      "none";
+
+    cameraState.textContent =
+      "ONLINE";
+
+    cameraStatus.textContent =
+      "ONLINE";
+
+    topStatus.textContent =
+      "CAMERA READY";
+
+    showToast("CAMERA CONNECTED");
+
+    resizeCanvases();
+
+    await initializeVision();
+
+  } catch (error) {
+
+    console.error(error);
+
+    cameraStatus.textContent =
+      "DENIED";
+
+    cameraState.textContent =
+      "ACCESS DENIED";
+
+    topStatus.textContent =
+      "CAMERA ACCESS REQUIRED";
+
+    startCameraButton.disabled = false;
+    startCameraButton.textContent =
+      "RETRY CAMERA";
+
+    showToast("CAMERA ACCESS FAILED");
+  }
+}
+
+startCameraButton.addEventListener(
+  "click",
+  initializeCamera
+);
+
+/* ============================================================
+   MEDIAPIPE INITIALIZATION
+============================================================ */
+
+async function initializeVision() {
+
+  try {
+
+    showToast("LOADING VISION ENGINE...");
+
+    const vision =
+      await FilesetResolver.forVisionTasks(
+        CONFIG.WASM_URL
+      );
+
+    state.handLandmarker =
+      await HandLandmarker.createFromOptions(
+        vision,
+        {
+          baseOptions: {
+            modelAssetPath:
+              CONFIG.MODEL_URL,
+            delegate: "GPU"
+          },
+
+          numHands: CONFIG.maxHands,
+
+          minHandDetectionConfidence:
+            CONFIG.minDetectionConfidence,
+
+          minHandPresenceConfidence:
+            CONFIG.minPresenceConfidence,
+
+          minTrackingConfidence:
+            CONFIG.minTrackingConfidence,
+
+          runningMode: "VIDEO"
+        }
+      );
+
+    state.initialized = true;
+
+    visionStatus.textContent =
+      "ONLINE";
+
+    gestureStatus.textContent =
+      "READY";
+
+    trackingStatus.textContent =
+      "WAITING";
+
+    topStatus.textContent =
+      "VISION ENGINE ONLINE";
+
+    statusDot.classList.add("online");
+
+    coreState.textContent =
+      "SPHERE READY";
+
+    showToast("VISION ENGINE ONLINE");
+
+    state.running = true;
+
+    requestAnimationFrame(processVideo);
+
+  } catch (error) {
+
+    console.error(error);
+
+    visionStatus.textContent =
+      "ERROR";
+
+    gestureStatus.textContent =
+      "ERROR";
+
+    topStatus.textContent =
+      "VISION ENGINE ERROR";
+
+    showToast(
+      "FAILED TO INITIALIZE VISION"
+    );
+  }
+}
+
+/* ============================================================
+   CANVAS
+============================================================ */
+
+function resizeCanvases() {
+
+  const rect =
+    video.getBoundingClientRect();
+
+  const dpr =
+    window.devicePixelRatio || 1;
+
+  visionCanvas.width =
+    Math.max(1, rect.width * dpr);
+
+  visionCanvas.height =
+    Math.max(1, rect.height * dpr);
+
+  fxCanvas.width =
+    Math.max(1, rect.width * dpr);
+
+  fxCanvas.height =
+    Math.max(1, rect.height * dpr);
+
+  const stageRect = centerStage.getBoundingClientRect();
+  sphereFxCanvas.width = Math.max(1, stageRect.width * dpr);
+  sphereFxCanvas.height = Math.max(1, stageRect.height * dpr);
+
+  visionCtx.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
+
+  fxCtx.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
+
+  sphereFxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener(
+  "resize",
+  resizeCanvases
+);
+
+/* ============================================================
+   DRAW HANDS
+============================================================ */
+
+const HAND_CONNECTIONS = [
+  [0,1],
+  [1,2],
+  [2,3],
+  [3,4],
+
+  [0,5],
+  [5,6],
+  [6,7],
+  [7,8],
+
+  [5,9],
+  [9,10],
+  [10,11],
+  [11,12],
+
+  [9,13],
+  [13,14],
+  [14,15],
+  [15,16],
+
+  [13,17],
+  [17,18],
+  [18,19],
+  [19,20],
+
+  [0,17]
+];
+
+function drawHand(
+  landmarks,
+  width,
+  height
+) {
+
+  visionCtx.save();
+
+  visionCtx.lineWidth = 1.25;
+  visionCtx.strokeStyle =
+    "rgba(94,227,255,.72)";
+  visionCtx.shadowColor =
+    "rgba(94,227,255,.6)";
+  visionCtx.shadowBlur = 8;
+
+  for (
+    const [a, b]
+    of HAND_CONNECTIONS
+  ) {
+
+    const p1 = landmarks[a];
+    const p2 = landmarks[b];
+
+    visionCtx.beginPath();
+
+    visionCtx.moveTo(
+      p1.x * width,
+      p1.y * height
+    );
+
+    visionCtx.lineTo(
+      p2.x * width,
+      p2.y * height
+    );
+
+    visionCtx.stroke();
+  }
+
+  visionCtx.shadowBlur = 14;
+
+  for (let i = 0; i < landmarks.length; i++) {
+
+    const point =
+      landmarks[i];
+
+    const x =
+      point.x * width;
+
+    const y =
+      point.y * height;
+
+    const radius =
+      [4, 8, 12, 16, 20].includes(i)
+        ? 3.2
+        : 2.1;
+
+    visionCtx.beginPath();
+
+    visionCtx.arc(
+      x,
+      y,
+      radius,
+      0,
+      Math.PI * 2
+    );
+
+    visionCtx.fillStyle =
+      [4,8].includes(i)
+        ? "rgba(128,255,207,.98)"
+        : "rgba(94,227,255,.95)";
+
+    visionCtx.fill();
+  }
+
+  /* Pinch indicator */
+
+  const thumb = landmarks[4];
+  const index = landmarks[8];
+
+  const pinchDist =
+    distance(thumb, index);
+
+  if (
+    pinchDist <
+    CONFIG.pinchThreshold * 1.5
+  ) {
+
+    const mid =
+      midpoint(thumb, index);
+
+    visionCtx.beginPath();
+
+    visionCtx.arc(
+      mid.x * width,
+      mid.y * height,
+      11,
+      0,
+      Math.PI * 2
+    );
+
+    visionCtx.strokeStyle =
+      "rgba(128,255,207,.75)";
+
+    visionCtx.lineWidth = 1;
+
+    visionCtx.stroke();
+  }
+
+  visionCtx.restore();
+}
+
+/* ============================================================
+   HAND POSITION
+============================================================ */
+
+function getHandCenter(landmarks) {
+
+  let x = 0;
+  let y = 0;
+
+  for (const p of landmarks) {
+    x += p.x;
+    y += p.y;
+  }
+
+  return {
+    x: x / landmarks.length,
+    y: y / landmarks.length
+  };
+}
+
+/* ============================================================
+   SPHERE TRANSFORMS AND GESTURE INTERACTIONS
+============================================================ */
+
+function updateCursorFromPoint(point) {
+  const rect = centerStage.getBoundingClientRect();
+  state.cursorX = (1 - point.x) * rect.width;
+  state.cursorY = point.y * rect.height;
+  cursor.style.left = `${state.cursorX}px`;
+  cursor.style.top = `${state.cursorY}px`;
+}
+
+function moveSphereToPoint(point) {
+  const x = clamp((1 - point.x) * 100, 15, 85);
+  const y = clamp(point.y * 100, 19, 79);
+
+  state.coreX = lerp(state.coreX, x, CONFIG.smoothing);
+  state.coreY = lerp(state.coreY, y, CONFIG.smoothing);
+  systemCore.style.left = `${state.coreX}%`;
+  systemCore.style.top = `${state.coreY}%`;
+}
+
+function updateSphereTransform() {
+  systemCore.style.transform =
+    `translate(-50%, -50%) rotateX(${state.coreRotationX}deg) rotateY(${state.coreRotationY}deg) rotateZ(${state.coreRotationZ}deg) scale(${state.coreScale})`;
+}
+
+function handleIndexPinch(landmarks) {
+  const pinchCenter = midpoint(landmarks[4], landmarks[8]);
+  updateCursorFromPoint(pinchCenter);
+  moveSphereToPoint(pinchCenter);
+}
+
+function handleZoomPinch(landmarks) {
+  const handY = getHandCenter(landmarks).y;
+  if (state.zoomHandY !== null) {
+    const verticalDrag = state.zoomHandY - handY;
+    state.coreScale = clamp(state.coreScale + verticalDrag * 3.2, 0.48, 2.15);
+  }
+  state.zoomHandY = handY;
+  updateSphereTransform();
+}
+
+function handlePointUp(landmarks) {
+  const wrist = landmarks[0];
+  const middleMcp = landmarks[9];
+  const twistAngle = Math.atan2(
+    middleMcp.y - wrist.y,
+    wrist.x - middleMcp.x
+  );
+
+  if (state.previousTwistAngle !== null) {
+    const twist = wrapAngleDelta(twistAngle - state.previousTwistAngle);
+    state.coreRotationZ += twist * 180 / Math.PI;
+    state.coreRotationX = clamp(state.coreRotationX + twist * 35, -45, 45);
+    state.coreRotationY = clamp(state.coreRotationY - twist * 35, -45, 45);
+  }
+
+  state.previousTwistAngle = twistAngle;
+  updateCursorFromPoint(landmarks[8]);
+  moveSphereToPoint(landmarks[8]);
+  updateSphereTransform();
+}
+
+let audioContext = null;
+
+function unlockAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  audioContext ||= new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume();
+}
+
+function playExplosionSound() {
+  if (!audioContext) unlockAudio();
+  if (!audioContext) return;
+
+  const now = audioContext.currentTime;
+  const master = audioContext.createGain();
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.42, now + 0.025);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+  master.connect(audioContext.destination);
+
+  const boom = audioContext.createOscillator();
+  const boomGain = audioContext.createGain();
+  boom.type = "sine";
+  boom.frequency.setValueAtTime(115, now);
+  boom.frequency.exponentialRampToValueAtTime(32, now + 0.55);
+  boomGain.gain.setValueAtTime(0.9, now);
+  boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+  boom.connect(boomGain).connect(master);
+  boom.start(now);
+  boom.stop(now + 0.8);
+
+  const buffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let i = 0; i < channel.length; i++) {
+    channel[i] = (Math.random() * 2 - 1) * (1 - i / channel.length);
+  }
+  const noise = audioContext.createBufferSource();
+  const filter = audioContext.createBiquadFilter();
+  const noiseGain = audioContext.createGain();
+  noise.buffer = buffer;
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(2400, now);
+  filter.frequency.exponentialRampToValueAtTime(180, now + 0.7);
+  noiseGain.gain.setValueAtTime(0.65, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+  noise.connect(filter).connect(noiseGain).connect(master);
+  noise.start(now);
+  noise.stop(now + 0.9);
+}
+
+function createExplosion(centerX, centerY) {
+  const now = performance.now();
+  state.explosionParticles = [];
+  for (let i = 0; i < 150; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 90 + Math.random() * 520;
+    state.explosionParticles.push({
+      x: centerX,
+      y: centerY,
+      previousX: centerX,
+      previousY: centerY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 1 + Math.random() * 3.5,
+      hue: 177 + Math.random() * 55,
+      life: 0.55 + Math.random() * 0.95,
+      age: 0,
+      born: now
+    });
+  }
+  state.explosionStarted = now;
+  requestAnimationFrame(renderExplosion);
+}
+
+function renderExplosion(timestamp) {
+  const ctx = sphereFxCtx;
+  const width = sphereFxCanvas.clientWidth;
+  const height = sphereFxCanvas.clientHeight;
+  const elapsed = Math.min((timestamp - state.explosionStarted) / 1000, 2);
+  const dt = 1 / 60;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.globalCompositeOperation = "lighter";
+
+  const burstRadius = elapsed * Math.min(width, height) * 1.15;
+  const ringAlpha = Math.max(0, 1 - elapsed / 0.72);
+  if (ringAlpha > 0) {
+    ctx.beginPath();
+    ctx.arc(state.explosionX, state.explosionY, burstRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(148, 249, 255, ${ringAlpha})`;
+    ctx.lineWidth = 2 + ringAlpha * 8;
+    ctx.shadowBlur = 28;
+    ctx.shadowColor = "#5ee3ff";
+    ctx.stroke();
+  }
+
+  state.explosionParticles = state.explosionParticles.filter(particle => {
+    particle.age += dt;
+    particle.previousX = particle.x;
+    particle.previousY = particle.y;
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vx *= 0.985;
+    particle.vy = particle.vy * 0.985 + 28 * dt;
+    const alpha = Math.max(0, 1 - particle.age / particle.life);
+
+    ctx.beginPath();
+    ctx.moveTo(particle.previousX, particle.previousY);
+    ctx.lineTo(particle.x, particle.y);
+    ctx.strokeStyle = `hsla(${particle.hue}, 100%, 72%, ${alpha})`;
+    ctx.lineWidth = particle.size * alpha;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = `hsl(${particle.hue}, 100%, 65%)`;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.size * alpha, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${particle.hue}, 100%, 82%, ${alpha})`;
+    ctx.fill();
+    return particle.age < particle.life;
+  });
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.shadowBlur = 0;
+
+  if (elapsed < 1.7 || state.explosionParticles.length) {
+    requestAnimationFrame(renderExplosion);
+  } else {
+    ctx.clearRect(0, 0, width, height);
+  }
+}
+
+function triggerSphereExplosion() {
+  if (state.sphereExploding) return;
+
+  state.sphereExploding = true;
+  state.zoomHandY = null;
+  state.previousTwistAngle = null;
+  state.explosionX = centerStage.clientWidth * state.coreX / 100;
+  state.explosionY = centerStage.clientHeight * state.coreY / 100;
+  systemCore.classList.remove("reappearing");
+  systemCore.classList.add("exploding");
+  coreState.textContent = "ENERGY DISCHARGE";
+  sphereStatus.textContent = "SPHERE DISINTEGRATING";
+  showToast("ENERGY DISCHARGE");
+  createExplosion(state.explosionX, state.explosionY);
+  playExplosionSound();
+
+  setTimeout(() => {
+    systemCore.classList.remove("exploding");
+    systemCore.classList.add("reappearing");
+    coreState.textContent = "SPHERE RESTORED";
+    sphereStatus.textContent = "SPHERE RESTORED";
+    state.sphereExploding = false;
+    setTimeout(() => systemCore.classList.remove("reappearing"), 760);
+  }, 2000);
+}
+
+/* ============================================================
+   VIDEO PROCESSING
+============================================================ */
+
+async function processVideo() {
+
+  if (
+    !state.running ||
+    !state.handLandmarker ||
+    video.readyState < 2
+  ) {
+    requestAnimationFrame(processVideo);
+    return;
+  }
+
+  const currentTime =
+    video.currentTime;
+
+  if (
+    currentTime ===
+    state.lastVideoTime
+  ) {
+    requestAnimationFrame(processVideo);
+    return;
+  }
+
+  state.lastVideoTime =
+    currentTime;
+
+  updateFPS();
+
+  try {
+
+    const timestamp =
+      performance.now();
+
+    const result =
+      state.handLandmarker.detectForVideo(
+        video,
+        timestamp
+      );
+
+    resizeCanvases();
+
+    visionCtx.clearRect(
+      0,
+      0,
+      visionCanvas.clientWidth,
+      visionCanvas.clientHeight
+    );
+
+    const landmarksList =
+      result.landmarks || [];
+
+    handCountEl.textContent =
+      landmarksList.length;
+
+    if (
+      landmarksList.length === 0
+    ) {
+
+      trackingStatus.textContent =
+        "SEARCHING";
+
+      cameraState.textContent =
+        "SEARCHING";
+
+      handCountEl.textContent = "0";
+
+      state.previousTwistAngle = null;
+      state.zoomHandY = null;
+
+      updateStableGesture(
+        "NONE",
+        0
+      );
+
+      renderEffects([]);
+
+    } else {
+
+      trackingStatus.textContent =
+        "ACTIVE";
+
+      cameraState.textContent =
+        "TRACKING";
+
+      const width =
+        visionCanvas.clientWidth;
+
+      const height =
+        visionCanvas.clientHeight;
+
+      for (
+        const landmarks
+        of landmarksList
+      ) {
+        drawHand(
+          landmarks,
+          width,
+          height
+        );
+      }
+
+      const primary =
+        landmarksList[0];
+
+      const staticGesture =
+        classifyStaticGesture(primary);
+
+      const currentGesture = staticGesture.gesture;
+
+      updateStableGesture(
+        currentGesture,
+        staticGesture.confidence
+      );
+
+      checkGestureRelease(
+        currentGesture
+      );
+
+      if (!state.sphereExploding) {
+        if (currentGesture === "MOVE PINCH") {
+          handleIndexPinch(primary);
+        } else if (currentGesture === "ZOOM PINCH") {
+          handleZoomPinch(primary);
+        } else if (currentGesture === "POINT UP") {
+          state.zoomHandY = null;
+          handlePointUp(primary);
+        } else {
+          state.zoomHandY = null;
+          state.previousTwistAngle = null;
+        }
+      }
+
+      renderEffects(
+        landmarksList
+      );
+    }
+
+    updateTelemetry();
+
+  } catch (error) {
+
+    console.error(
+      "Vision processing error:",
+      error
+    );
+  }
+
+  requestAnimationFrame(processVideo);
+}
+
+/* ============================================================
+   FPS
+============================================================ */
+
+function updateFPS() {
+
+  state.fpsFrames++;
+
+  const now =
+    performance.now();
+
+  const elapsed =
+    now - state.fpsStartTime;
+
+  if (elapsed >= 1000) {
+
+    state.fps =
+      Math.round(
+        state.fpsFrames *
+        1000 /
+        elapsed
+      );
+
+    state.fpsFrames = 0;
+    state.fpsStartTime =
+      now;
+
+    fpsMini.textContent =
+      state.fps;
+
+  }
+}
+
+/* ============================================================
+   TELEMETRY
+============================================================ */
+
+function updateTelemetry() {
+
+  gestureMini.textContent =
+    state.gesture;
+
+  confidenceMini.textContent =
+    `${Math.round(
+      state.confidence * 100
+    )}%`;
+
+  if (
+    state.gesture === "NONE"
+  ) {
+    gestureName.textContent =
+      "NONE";
+  }
+
+}
+
+/* ============================================================
+   FX PARTICLES
+============================================================ */
+
+function renderEffects(
+  landmarks
+) {
+
+  const width =
+    fxCanvas.clientWidth;
+
+  const height =
+    fxCanvas.clientHeight;
+
+  fxCtx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  /* Particles */
+
+  for (
+    const particle
+    of state.particles
+  ) {
+
+    particle.y -=
+      particle.speed;
+
+    if (particle.y < 0) {
+      particle.y = 1;
+    }
+
+    const pulse =
+      .65 +
+      Math.sin(
+        performance.now() / 900 +
+        particle.phase
+      ) * .35;
+
+    fxCtx.beginPath();
+
+    fxCtx.arc(
+      particle.x * width,
+      particle.y * height,
+      particle.size,
+      0,
+      Math.PI * 2
+    );
+
+    fxCtx.fillStyle =
+      `rgba(94,227,255,${
+        particle.alpha * pulse
+      })`;
+
+    fxCtx.fill();
+  }
+
+  /* Hand motion halo */
+
+  if (
+    landmarks.length
+  ) {
+
+    const center =
+      getHandCenter(
+        landmarks[0]
+      );
+
+    const x =
+      (1 - center.x) * width;
+
+    const y =
+      center.y * height;
+
+    const gradient =
+      fxCtx.createRadialGradient(
+        x,
+        y,
+        0,
+        x,
+        y,
+        95
+      );
+
+    gradient.addColorStop(
+      0,
+      "rgba(94,227,255,.15)"
+    );
+
+    gradient.addColorStop(
+      1,
+      "rgba(94,227,255,0)"
+    );
+
+    fxCtx.fillStyle =
+      gradient;
+
+    fxCtx.beginPath();
+
+    fxCtx.arc(
+      x,
+      y,
+      95,
+      0,
+      Math.PI * 2
+    );
+
+    fxCtx.fill();
+  }
+}
+
+/* ============================================================
+   GESTURE DEMO SHORTCUTS
+============================================================ */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    const key =
+      event.key;
+
+    const demoGestures = {
+      "1": "MOVE PINCH",
+      "2": "ZOOM PINCH",
+      "3": "POINT UP",
+      "4": "FIST",
+      "5": "NONE"
+    };
+
+    if (demoGestures[key]) simulateGesture(demoGestures[key]);
+
+  }
+);
+
+/* ============================================================
+   DEMO MODE
+============================================================ */
+
+function simulateGesture(
+  gesture
+) {
+
+  state.gesture =
+    gesture;
+
+  state.confidence =
+    gesture === "NONE"
+      ? 0
+      : .95;
+
+  handleGestureTransition(
+    gesture,
+    state.confidence
+  );
+
+  updateTelemetry();
+}
+
+setInterval(() => {
+
+  if (
+    state.demoMode &&
+    !state.cameraActive
+  ) {
+
+    /*
+      Very subtle idle demo telemetry.
+      Real camera mode takes over automatically.
+    */
+
+    state.fps =
+      58 + Math.round(
+        Math.random() * 3
+      );
+
+    fpsMini.textContent =
+      state.fps;
+  }
+
+}, 1000);
+
+/* ============================================================
+   RESET WHEN TAB CLOSES
+============================================================ */
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    if (state.stream) {
+
+      state.stream
+        .getTracks()
+        .forEach(
+          track =>
+            track.stop()
+        );
+    }
+
+    if (
+      state.handLandmarker
+    ) {
+
+      try {
+        state.handLandmarker.close();
+      } catch {}
+    }
+  }
+);
+
+/* ============================================================
+   INITIAL STATE
+============================================================ */
+
+cameraStatus.textContent =
+  "STANDBY";
+
+visionStatus.textContent =
+  "OFFLINE";
+
+trackingStatus.textContent =
+  "IDLE";
+
+gestureStatus.textContent =
+  "READY";
+
+topStatus.textContent =
+  "SYSTEM STANDBY";
+
+coreState.textContent =
+  "AWAITING GESTURE";
+
+renderEffects([]);
+
+</script>
+</body>
+</html>
